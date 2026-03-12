@@ -4,13 +4,12 @@
 
 // ---- Photo gate (webcam entry) ----
 (function () {
-  const gate     = document.getElementById("photo-gate");
-  const video    = document.getElementById("gate-video");
-  const canvas   = document.getElementById("gate-canvas");
-  const snapBtn  = document.getElementById("gate-snap-btn");
-  const statusEl = document.getElementById("gate-status");
-  const skipBtn  = document.getElementById("gate-skip");
-  const flash    = document.getElementById("gate-flash");
+  const gate      = document.getElementById("photo-gate");
+  const video     = document.getElementById("gate-video");
+  const canvas    = document.getElementById("gate-canvas");
+  const snapBtn   = document.getElementById("gate-snap-btn");
+  const statusEl  = document.getElementById("gate-status");
+  const flash     = document.getElementById("gate-flash");
   const countdown = document.getElementById("gate-countdown");
 
   // Only show on first ever visit
@@ -20,19 +19,28 @@
     return;
   }
 
+  // Block all keyboard/scroll escape attempts
+  document.addEventListener("keydown", blockKeys, true);
+  function blockKeys(e) {
+    if (!gate.classList.contains("hidden")) e.stopImmediatePropagation();
+  }
+
   let stream = null;
 
-  navigator.mediaDevices.getUserMedia({ video: { width: 320, height: 240, facingMode: "user" }, audio: false })
-    .then(s => {
-      stream = s;
-      video.srcObject = s;
-      statusEl.textContent = "smile! 📸";
-      snapBtn.disabled = false;
-      snapBtn.textContent = "[ 📸 take photo ]";
-    })
-    .catch(() => {
-      statusEl.textContent = "camera blocked — use skip";
-    });
+  function startCamera() {
+    navigator.mediaDevices.getUserMedia({ video: { width: 320, height: 240, facingMode: "user" }, audio: false })
+      .then(s => {
+        stream = s;
+        video.srcObject = s;
+        statusEl.textContent = "smile! 📸";
+        snapBtn.disabled = false;
+      })
+      .catch(() => {
+        statusEl.innerHTML = 'camera access required &mdash; <button id="gate-retry" style="background:none;border:none;color:var(--cyan);cursor:pointer;font-family:var(--font-mono);font-size:1rem;text-decoration:underline">allow & retry</button>';
+        document.getElementById("gate-retry")?.addEventListener("click", startCamera);
+      });
+  }
+  startCamera();
 
   snapBtn.addEventListener("click", () => {
     snapBtn.disabled = true;
@@ -52,31 +60,27 @@
   });
 
   function doSnap() {
-    // Flash
     flash.classList.add("on");
     setTimeout(() => flash.classList.remove("on"), 120);
 
-    // Capture frame
     canvas.width  = 320;
     canvas.height = 240;
     const ctx2 = canvas.getContext("2d");
     ctx2.save();
     ctx2.translate(canvas.width, 0);
-    ctx2.scale(-1, 1); // mirror to match the mirrored video preview
+    ctx2.scale(-1, 1);
     ctx2.drawImage(video, 0, 0, 320, 240);
     ctx2.restore();
 
     const dataURL = canvas.toDataURL("image/jpeg", 0.72);
 
-    // Save to localStorage
     try {
       const stored = JSON.parse(localStorage.getItem("carlos-perverts") || "[]");
       stored.push({ url: dataURL, date: new Date().toLocaleDateString() });
-      if (stored.length > 25) stored.shift(); // cap at 25
+      if (stored.length > 25) stored.shift();
       localStorage.setItem("carlos-perverts", JSON.stringify(stored));
-    } catch (e) { /* localStorage full — skip saving */ }
+    } catch (e) { /* localStorage full */ }
 
-    // Show captured image, hide video
     canvas.style.display = "block";
     video.style.display  = "none";
     statusEl.textContent = "looking good 😎";
@@ -85,10 +89,9 @@
     snapBtn.onclick      = closeGate;
   }
 
-  skipBtn.addEventListener("click", closeGate);
-
   function closeGate() {
     if (stream) stream.getTracks().forEach(t => t.stop());
+    document.removeEventListener("keydown", blockKeys, true);
     gate.classList.add("hidden");
     localStorage.setItem("carlos-gated", "1");
     loadPerverts();
@@ -333,7 +336,7 @@ document.getElementById("egg-popup")?.addEventListener("click", e => {
 // ---- Confetti burst ----
 function launchConfetti() {
   const chars  = ["✦","★","✿","♥","✨","·","◆","▲"];
-  const colors = ["#ff69b4","#00ccff","#ffeb00","#39ff14","#cc88ff","#ffffff"];
+  const colors = ["#e0407a","#f078a8","#ffaacc","#cc1166","#ff88bb","#ffffff"];
   for (let i = 0; i < 40; i++) {
     setTimeout(() => {
       const el = document.createElement("span");
@@ -364,12 +367,12 @@ document.addEventListener("contextmenu", e => {
     position: fixed;
     left: ${e.clientX}px;
     top: ${e.clientY}px;
-    background: #1a0033;
-    color: #ff69b4;
+    background: #fff0f6;
+    color: #e0407a;
     font-family: "VT323", monospace;
     font-size: 1.3rem;
     padding: 6px 14px;
-    border: 1px solid #ff69b4;
+    border: 1px solid #f0a0be;
     z-index: 9999;
     pointer-events: none;
     white-space: nowrap;
@@ -390,8 +393,8 @@ document.addEventListener("keypress", e => {
     const title = document.querySelector(".site-title");
     if (title) {
       const orig = title.style.color;
-      title.style.color = "#00ccff";
-      title.style.textShadow = "0 0 20px #00ccff";
+      title.style.color = "#e0407a";
+      title.style.textShadow = "0 0 20px #f0a0be";
       setTimeout(() => {
         title.style.color      = orig;
         title.style.textShadow = "";
