@@ -279,7 +279,7 @@ document.addEventListener("keypress", e => {
   }
 });
 
-// ---- Monkey (Boots-style canvas) ----
+// ---- Monkey (pixel art — Dominican papi bachata edition) ----
 let monkeyDance = () => {};
 let monkeyChill = () => {};
 
@@ -289,272 +289,199 @@ let monkeyChill = () => {};
   const flipper   = document.getElementById("monkey-flipper");
   const prompt    = document.getElementById("banana-prompt");
 
-  // Canvas drawn at 2x resolution, displayed at half size for crispness
-  // Display size: 40×56px  (4x smaller area than before)
-  const CW = 80, CH = 112, DW = 40, DH = 56;
+  // Pixel art canvas: 16×22 internal, 3× CSS scale → 48×66px display
+  const CW = 16, CH = 22, SC = 3;
+  const DW = CW * SC, DH = CH * SC;
   const canvas = document.createElement("canvas");
   canvas.id = "monkey-canvas";
-  canvas.width = CW; canvas.height = CH;
-  canvas.style.width = DW + "px"; canvas.style.height = DH + "px";
+  canvas.width  = CW; canvas.height = CH;
+  canvas.style.width  = DW + "px";
+  canvas.style.height = DH + "px";
+  canvas.style.imageRendering = "pixelated";
   flipper.appendChild(canvas);
   const ctx = canvas.getContext("2d");
 
-  // ---- Boots-accurate color palette ----
-  const FUR   = "#E8A028";   // warm golden-orange
-  const LIGHT = "#F5D898";   // cream face / belly
-  const BOOT  = "#E02020";   // bright red boots
-  const BOOTD = "#8B0E0E";   // boot shadow / sole
-  const WHITE = "#FFFFFF";
-  const DARK  = "#0E0620";   // deep pupils
-  const NOSE  = "#3A1800";
-  const LINE  = "#7A4010";   // warm brown outline
-  const PINK  = "#FFB8B8";   // inner ear
+  // Color palette
+  const FUR   = "#7B3F00";   // main fur (warm dark brown)
+  const FACE  = "#D4956A";   // face / muzzle (lighter)
+  const EYE   = "#1A0800";   // dark eyes
+  const SHINE = "#FFFFFF";   // eye shine
+  const CAP   = "#1A1A3E";   // snapback crown (navy)
+  const BRIM  = "#2C2C5E";   // snapback brim
+  const CHAIN = "#FFD700";   // gold chain
+  const BELLY = "#B07040";   // belly patch
+  const NOSE  = "#3A1500";   // nose
 
   // ---- State ----
   let mx          = window.innerWidth / 2;
   let mvx         = 0.8;
   let facing      = 1;
   let health      = 100;
-  let bananaEl    = null;   // the DOM banana element
-  let bananaX     = null;   // target x for monkey
-  let bananaState = "none"; // "falling" | "landed" | "ready"
-  let bananaPhys  = null;   // { x, y, vy, splitFrame }
+  let bananaEl    = null;
+  let bananaX     = null;
+  let bananaState = "none";
+  let bananaPhys  = null;
   let nomming     = false;
   let monkeyState = "walking";
   let loungeTimer = null;
   let t           = 0;
 
-  // ---- Drawing helpers ----
-  function oval(cx, cy, rx, ry, fill, lw = 1) {
-    ctx.beginPath();
-    ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
-    ctx.fillStyle = fill; ctx.strokeStyle = LINE; ctx.lineWidth = lw;
-    ctx.fill(); ctx.stroke();
+  // ---- Pixel helpers ----
+  function px(x, y, c) {
+    if (x < 0 || x >= CW || y < 0 || y >= CH) return;
+    ctx.fillStyle = c;
+    ctx.fillRect(x, y, 1, 1);
   }
-  function circ(cx, cy, r, fill, lw = 1) {
-    ctx.beginPath();
-    ctx.arc(cx, cy, r, 0, Math.PI * 2);
-    ctx.fillStyle = fill; ctx.strokeStyle = LINE; ctx.lineWidth = lw;
-    ctx.fill(); ctx.stroke();
-  }
-
-  // Boots: tall red boot drawn at current ctx origin
-  function drawBoot() {
-    // Leg / boot shaft
-    ctx.beginPath();
-    ctx.ellipse(0, -6, 5, 8, 0, 0, Math.PI * 2);
-    ctx.fillStyle = BOOT; ctx.strokeStyle = BOOTD; ctx.lineWidth = 1.5;
-    ctx.fill(); ctx.stroke();
-    // Foot
-    ctx.beginPath();
-    ctx.ellipse(3, 0, 9, 5, -0.1, 0, Math.PI * 2);
-    ctx.fillStyle = BOOT; ctx.strokeStyle = BOOTD; ctx.lineWidth = 1.5;
-    ctx.fill(); ctx.stroke();
-    // Cuff fold
-    ctx.beginPath();
-    ctx.ellipse(0, -12, 5.5, 2.5, 0, 0, Math.PI * 2);
-    ctx.fillStyle = "#FF4444"; ctx.fill();
-    // Shine
-    ctx.beginPath();
-    ctx.ellipse(1, -1, 3, 1.5, -0.2, 0, Math.PI * 2);
-    ctx.fillStyle = "rgba(255,255,255,0.3)"; ctx.fill();
+  function span(x1, x2, y, c) {
+    if (y < 0 || y >= CH) return;
+    const a = Math.max(0, x1), b = Math.min(CW - 1, x2);
+    if (a > b) return;
+    ctx.fillStyle = c;
+    ctx.fillRect(a, y, b - a + 1, 1);
   }
 
-  function drawEar(ex, ey) {
-    circ(ex, ey, 9, FUR, 1.5);
-    circ(ex, ey, 5, PINK, 0);
-  }
-
-  function drawEye(ex, ey, dead) {
-    // Outer white — Boots has HUGE eyes
-    ctx.beginPath();
-    ctx.ellipse(ex, ey, 7, 8.5, 0, 0, Math.PI * 2);
-    ctx.fillStyle = WHITE; ctx.strokeStyle = LINE; ctx.lineWidth = 1.2;
-    ctx.fill(); ctx.stroke();
-    if (dead) {
-      ctx.strokeStyle = "#333"; ctx.lineWidth = 2.5; ctx.lineCap = "round";
-      ctx.beginPath(); ctx.moveTo(ex-4,ey-4); ctx.lineTo(ex+4,ey+4); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(ex+4,ey-4); ctx.lineTo(ex-4,ey+4); ctx.stroke();
-    } else {
-      // Iris
-      ctx.beginPath();
-      ctx.ellipse(ex+1, ey+1, 4.5, 5.5, 0, 0, Math.PI * 2);
-      ctx.fillStyle = "#4A2800"; ctx.fill();
-      // Pupil
-      ctx.beginPath();
-      ctx.ellipse(ex+1, ey+1, 3, 3.8, 0, 0, Math.PI * 2);
-      ctx.fillStyle = DARK; ctx.fill();
-      // Big shine (very Boots)
-      ctx.beginPath();
-      ctx.arc(ex+3.5, ey-2.5, 2.2, 0, Math.PI * 2);
-      ctx.fillStyle = WHITE; ctx.fill();
-      // Small second shine
-      ctx.beginPath();
-      ctx.arc(ex-1, ey+2.5, 1, 0, Math.PI * 2);
-      ctx.fillStyle = "rgba(255,255,255,0.6)"; ctx.fill();
-    }
-  }
-
-  // ---- Main draw ----
+  // ---- Main pixel-art draw ----
   function drawMonkey(state) {
     ctx.clearRect(0, 0, CW, CH);
+
+    const dead     = health <= 0;
+    const dancing  = state === "dancing";
+    const lounging = state === "lounging";
+
+    // --- Bachata animation parameters ---
+    // hipOff: body shifts left/right on the beat (shoulders stay still)
+    // stepL/R: leg raises -1px on their beat
+    // armUp: which side raises for bachata frame
+    let hipOff = 0, bounce = 0, stepL = 0, stepR = 0, armUp = 1;
+
+    if (dancing) {
+      const beat = t * 3.2;                         // ~3.2 cycles/s
+      hipOff = Math.round(Math.sin(beat) * 1.6);    // hip sway ±1–2px
+      bounce = Math.sin(beat * 2) > 0.7 ? -1 : 0;  // subtle up-pop on beat
+      stepL  = Math.sin(beat) >  0.5 ? -1 : 0;
+      stepR  = Math.sin(beat) < -0.5 ? -1 : 0;
+      armUp  = Math.sin(beat) > 0 ? 1 : -1;        // alternate which arm leads
+    } else if (state === "walking") {
+      const sw = Math.sin(t * 5.5);
+      stepL = sw >  0.5 ? -1 : 0;
+      stepR = sw < -0.5 ? -1 : 0;
+    }
+
+    // flip canvas for facing direction
     ctx.save();
     if (facing === -1) { ctx.translate(CW, 0); ctx.scale(-1, 1); }
 
-    // ---- Per-limb animation angles ----
-    let armFR = 0.3, armBR = -0.3;
-    let armFFR = 0,  armBFR = 0;
-    let legFR = 0,   legBR = 0;
-    let by = 0, bodyLean = 0;
+    // ===== SNAPBACK CAP (rows 0-2) =====
+    span(4, 11, 0, CAP);   // crown row 0
+    span(4, 11, 1, CAP);   // crown row 1
+    span(2, 13, 2, BRIM);  // brim (wider, flat)
 
-    if (state === "dancing") {
-      const beat = Math.tanh(Math.sin(t * 9) * 6);
-      const sway = Math.sin(t * 4.5);
-      // Disco: alternating arm up/down point
-      armFR  = -0.35 - beat * 1.05;
-      armBR  = -0.35 + beat * 1.05;
-      armFFR =  beat * 0.55;
-      armBFR = -beat * 0.55;
-      legFR  =  beat * 0.70;
-      legBR  = -beat * 0.70;
-      by         = Math.abs(Math.sin(t * 9)) * 16;
-      bodyLean   = sway * 0.22;
-    } else if (state === "walking") {
-      const sw = Math.sin(t * 5.5) * 0.40;
-      armFR  =  0.3 - sw * 0.9;
-      armBR  = -0.3 + sw * 0.9;
-      legFR  =  sw * 0.72;
-      legBR  = -sw * 0.72;
-      by     = Math.abs(Math.sin(t * 5.5)) * 2.5;
-    } else if (state === "lounging") {
-      armFR  =  1.0;
-      armBR  = -1.0;
-      legFR  = -0.7;
-      legBR  =  0.7;
+    // ===== HEAD (rows 3-8) =====
+    const hy = 3;
+    span(4, 11, hy,   FUR);  // top of head
+
+    // Rows hy+1..hy+3: ears (col 3 & 12) + head + face
+    for (let r = 1; r <= 3; r++) {
+      px(3,  hy + r, FUR);   // left ear
+      px(12, hy + r, FUR);   // right ear
+      span(4, 11, hy + r, FUR);  // head outline
     }
+    // Face (lighter fill inside)
+    span(5, 10, hy + 1, FACE);
+    span(5, 10, hy + 2, FACE);
+    span(5, 10, hy + 3, FACE);
 
-    // Boots has a big head — push body down a bit
-    const bX = 40, bY = 76 - by;
-    const hX = 40, hY = bY - 36;
-
-    // Tail
-    ctx.save();
-    ctx.strokeStyle = FUR; ctx.lineWidth = 5; ctx.lineCap = "round";
-    const tw = Math.sin(t * (state === "dancing" ? 12 : 3)) * (state === "dancing" ? 14 : 8);
-    ctx.beginPath();
-    ctx.moveTo(bX - 13, bY - 8);
-    ctx.bezierCurveTo(bX-28, bY-12+tw*0.3, bX-34, bY-28+tw, bX-26, bY-44+tw*1.3);
-    ctx.stroke();
-    ctx.restore();
-
-    // Body lean wrapper
-    ctx.save();
-    ctx.translate(bX, bY - 14); ctx.rotate(bodyLean); ctx.translate(-bX, -(bY - 14));
-
-    // Back arm
-    ctx.save();
-    ctx.translate(bX - 14, bY - 20);
-    ctx.rotate(armBR);
-    oval(0, 8, 4, 9, FUR);
-    ctx.translate(0, 15); ctx.rotate(armBFR);
-    oval(0, 6, 3, 7, FUR);
-    ctx.translate(0, 11); circ(0, 0, 3.5, LIGHT);
-    ctx.restore();
-
-    // Back leg
-    ctx.save();
-    ctx.translate(bX - 9, bY + 2);
-    ctx.rotate(legBR);
-    oval(0, 8, 5.5, 9, FUR);
-    ctx.translate(0, 15); ctx.rotate(legBR * 0.3 + 0.1);
-    oval(0, 6, 4.5, 7, FUR);
-    ctx.translate(0, 11); drawBoot();
-    ctx.restore();
-
-    // Body — Boots has a smallish oval body
-    ctx.save();
-    ctx.translate(bX, bY);
-    ctx.beginPath();
-    ctx.ellipse(0, -11, 17, 20, 0, 0, Math.PI * 2);
-    ctx.fillStyle = FUR; ctx.strokeStyle = LINE; ctx.lineWidth = 1.5;
-    ctx.fill(); ctx.stroke();
-    // Belly
-    ctx.beginPath();
-    ctx.ellipse(0, -8, 10, 14, 0, 0, Math.PI * 2);
-    ctx.fillStyle = LIGHT; ctx.fill();
-    ctx.restore();
-
-    // Front leg
-    ctx.save();
-    ctx.translate(bX + 9, bY + 2);
-    ctx.rotate(legFR);
-    oval(0, 8, 5.5, 9, FUR);
-    ctx.translate(0, 15); ctx.rotate(legFR * 0.3 + 0.1);
-    oval(0, 6, 4.5, 7, FUR);
-    ctx.translate(0, 11); drawBoot();
-    ctx.restore();
-
-    // Front arm
-    ctx.save();
-    ctx.translate(bX + 14, bY - 20);
-    ctx.rotate(armFR);
-    oval(0, 8, 4, 9, FUR);
-    ctx.translate(0, 15); ctx.rotate(armFFR);
-    oval(0, 6, 3, 7, FUR);
-    ctx.translate(0, 11); circ(0, 0, 3.5, LIGHT);
-    ctx.restore();
-
-    ctx.restore(); // body lean
-
-    // Head — proportionally large like Boots
-    const headBob = state === "dancing" ? Math.sin(t * 9) * 3.5 : 0;
-    ctx.save();
-    ctx.translate(hX, hY + headBob);
-    ctx.rotate(state === "dancing" ? Math.sin(t * 4.5) * 0.2 : 0);
-
-    drawEar(-16, -2); drawEar(16, -2);
-
-    // Head — bigger radius for Boots' large round head
-    circ(0, 0, 21, FUR, 1.5);
-
-    // Cream muzzle (lower half of face, very prominent)
-    ctx.beginPath();
-    ctx.ellipse(0, 9, 14, 12, 0, 0, Math.PI * 2);
-    ctx.fillStyle = LIGHT; ctx.fill();
-    ctx.strokeStyle = LINE; ctx.lineWidth = 0.8; ctx.stroke();
-
-    // Eyes — Boots' signature HUGE eyes
-    drawEye(-8, -4, health <= 0);
-    drawEye(8, -4, health <= 0);
-
-    // Nose — small oval
-    ctx.beginPath();
-    ctx.ellipse(0, 5, 3, 2, 0, 0, Math.PI * 2);
-    ctx.fillStyle = NOSE; ctx.fill();
-
-    // Mouth
-    ctx.strokeStyle = NOSE; ctx.lineWidth = 1.8; ctx.lineCap = "round";
-    if (health <= 0) {
-      ctx.beginPath(); ctx.arc(0, 13, 8, 1.1*Math.PI, 1.9*Math.PI); ctx.stroke();
-    } else if (state === "dancing") {
-      ctx.beginPath(); ctx.arc(0, 9, 9, 0.08*Math.PI, 0.92*Math.PI);
-      ctx.fillStyle = "#7A0000"; ctx.fill(); ctx.stroke();
-      ctx.beginPath(); ctx.arc(0, 10, 5, 0.1*Math.PI, 0.9*Math.PI);
-      ctx.fillStyle = "#FF5555"; ctx.fill();
+    // Eyes
+    if (dead) {
+      // X eyes
+      px(5, hy+1, EYE); px(6, hy+2, EYE);
+      px(6, hy+1, EYE); px(5, hy+2, EYE);
+      px(9, hy+1, EYE); px(10, hy+2, EYE);
+      px(10, hy+1, EYE); px(9, hy+2, EYE);
     } else {
-      ctx.beginPath(); ctx.arc(0, 9, 8, 0.1*Math.PI, 0.9*Math.PI); ctx.stroke();
+      px(5, hy+2, EYE);   px(6, hy+2, EYE);   // left eye (2-wide)
+      px(9, hy+2, EYE);   px(10, hy+2, EYE);  // right eye
+      px(5, hy+1, SHINE); px(9, hy+1, SHINE);  // shine dots
     }
 
-    // zzz when lounging
-    if (state === "lounging") {
-      ctx.font = "bold 7px sans-serif";
+    // Nose & mouth
+    px(7, hy+3, NOSE); px(8, hy+3, NOSE);      // nose
+    if (dancing) {
+      px(6, hy+4, NOSE); px(9, hy+4, NOSE);    // big smile corners
+      span(7, 8, hy+4, FACE);                   // open mouth
+    } else if (!dead) {
+      span(6, 9, hy+4, FUR);                    // chin bar / small smile
+    }
+
+    // ===== NECK + GOLD CHAIN (row hy+5 = row 8) =====
+    const ny = hy + 5;  // row 8
+    span(5, 10, ny, FUR);
+    // Dominican papi gold chain — alternating gold pixels
+    px(5, ny, CHAIN); px(7, ny, CHAIN); px(9, ny, CHAIN);
+
+    // ===== BODY (rows 9-12 + bounce) =====
+    // Upper body / shoulders stay centered (no hipOff) — hips shift below
+    const by0 = ny + 1 + bounce;  // row 9 (or 8 on bounce pop)
+    span(4, 11, by0, FUR);         // shoulders row
+
+    // Hips and lower body shift with hipOff
+    span(3 + hipOff, 12 + hipOff, by0 + 1, FUR);
+    span(3 + hipOff, 12 + hipOff, by0 + 2, FUR);
+    span(4 + hipOff, 11 + hipOff, by0 + 3, FUR);
+    // Belly patch
+    span(5 + hipOff, 10 + hipOff, by0 + 1, BELLY);
+    span(5 + hipOff, 10 + hipOff, by0 + 2, BELLY);
+
+    // ===== ARMS =====
+    // Left arm (bachata: raises diagonally up when armUp===1)
+    if (dancing && armUp === 1) {
+      px(3, by0,   FUR);
+      px(2, by0-1, FUR);
+      px(1, by0-2, FUR);          // raised diagonal
+    } else {
+      px(3, by0,   FUR);
+      px(2, by0+1, FUR);
+      px(3, by0+2, FUR);          // arm down-out
+    }
+    // Right arm (raises when armUp===-1)
+    if (dancing && armUp === -1) {
+      px(12, by0,   FUR);
+      px(13, by0-1, FUR);
+      px(14, by0-2, FUR);         // raised diagonal
+    } else {
+      px(12, by0,   FUR);
+      px(13, by0+1, FUR);
+      px(12, by0+2, FUR);         // arm down-out
+    }
+
+    // ===== LEGS =====
+    const ly = by0 + 4;
+    // Left leg
+    span(4 + hipOff, 5 + hipOff, ly + stepL,     FUR);
+    span(4 + hipOff, 5 + hipOff, ly + stepL + 1, FUR);
+    span(4 + hipOff, 5 + hipOff, ly + stepL + 2, FUR);
+    // Right leg
+    span(9 + hipOff, 10 + hipOff, ly + stepR,     FUR);
+    span(9 + hipOff, 10 + hipOff, ly + stepR + 1, FUR);
+    span(9 + hipOff, 10 + hipOff, ly + stepR + 2, FUR);
+    // Feet (slightly wider)
+    span(3 + hipOff, 6 + hipOff, ly + stepL + 3, FUR);
+    span(8 + hipOff, 11 + hipOff, ly + stepR + 3, FUR);
+
+    // ===== TAIL (wiggly pixels off left side of body) =====
+    const tailAmp = dancing ? 2 : 1;
+    const tw = Math.round(Math.sin(t * (dancing ? 10 : 3)) * tailAmp);
+    px(2 + hipOff, by0 + 1 + tw, FUR);
+    px(1 + hipOff, by0 + tw,     FUR);
+    px(0 + hipOff, by0 - 1 + tw, FUR);
+
+    // ===== ZZZ when lounging =====
+    if (lounging) {
+      ctx.font = "3px sans-serif";
       ctx.fillStyle = "#9966bb";
-      const zOff = Math.sin(t * 2) * 2;
-      ctx.fillText("z", 20, -20 + zOff);
-      ctx.fillText("z", 26, -28 + zOff);
+      ctx.fillText("z", 13, 7);
     }
 
-    ctx.restore(); // head
     ctx.restore(); // facing flip
   }
 

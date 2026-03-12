@@ -514,7 +514,8 @@ footer {
 }
 #monkey-canvas {
   display: block;
-  image-rendering: auto;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
 }
 #monkey-hb-wrap {
   width: 36px;
