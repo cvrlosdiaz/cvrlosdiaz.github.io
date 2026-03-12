@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>★ carlos's corner ★</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=VT323&family=Press+Start+2P&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <canvas id="stars-canvas"></canvas>
+
+  <div class="container">
+
+    <header>
+      <div class="marquee-wrap">
+        <div class="marquee-inner">
+          ★ welcome 2 carlos's corner ★ &nbsp;&nbsp;&nbsp;
+          ♥ you found it ♥ &nbsp;&nbsp;&nbsp;
+          ☆ make yourself at home ☆ &nbsp;&nbsp;&nbsp;
+          ✿ est. 2026 ✿ &nbsp;&nbsp;&nbsp;
+        </div>
+      </div>
+      <h1 class="site-title">carlos's corner</h1>
+      <p class="site-sub">still loading<span class="ellipsis"></span></p>
+    </header>
+
+    <nav>
+      <button class="nav-btn active" data-target="home">[ home ]</button>
+      <button class="nav-btn" data-target="stuff">[ stuff ]</button>
+      <button class="nav-btn" data-target="mystery">[ ??? ]</button>
+      <button class="nav-btn" data-target="hi">[ hi ]</button>
+    </nav>
+
+    <main>
+
+      <!-- HOME -->
+      <section id="home" class="section active">
+        <div class="widget now-playing">
+          <span class="widget-label">♪ now playing:</span>
+          <span id="song-title">edit me in index.html</span>
+          <span class="blink">▶</span>
+        </div>
+
+        <div class="home-text">
+          <p>hey. you're here.</p>
+          <p>
+            this is my little corner of the internet —<br />
+            no algorithms, no metrics, no point.<br />
+            just <span class="highlight">stuff</span>.
+          </p>
+          <p>look around. click things.</p>
+          <p class="small dimmed">there might be secrets.</p>
+        </div>
+
+        <div class="divider">· · ·</div>
+
+        <div class="home-grid">
+          <div class="mini-card" id="mood-card">
+            <span class="card-label">mood rn</span>
+            <span class="card-val" id="mood-val">edit me</span>
+          </div>
+          <div class="mini-card" id="location-card">
+            <span class="card-label">location</span>
+            <span class="card-val" id="location-val">somewhere</span>
+          </div>
+          <div class="mini-card" id="status-card">
+            <span class="card-label">status</span>
+            <span class="card-val" id="status-val">existing</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- STUFF -->
+      <section id="stuff" class="section">
+        <h2 class="section-title">// stuff</h2>
+        <p class="section-sub">a collection. always growing.</p>
+
+        <div class="stuff-grid">
+          <div class="card">
+            <h3>🎵 music</h3>
+            <ul>
+              <li>add your fave album</li>
+              <li>that song u keep replaying</li>
+              <li>a playlist link</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>📖 reading</h3>
+            <ul>
+              <li>a book u loved</li>
+              <li>an article worth saving</li>
+              <li>something half-finished</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>🔗 corners of the web</h3>
+            <ul>
+              <li><a href="#">a link u like</a></li>
+              <li><a href="#">somewhere cool</a></li>
+              <li><a href="#">???</a></li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>💭 thoughts</h3>
+            <ul>
+              <li>something u want to remember</li>
+              <li>a quote that hit different</li>
+              <li>an idea</li>
+            </ul>
+          </div>
+          <div class="card full-width">
+            <h3>📸 things i've seen</h3>
+            <p class="small dimmed">
+              add photos, screenshots, drawings — anything visual.<br />
+              drop image files in this folder and link them here.
+            </p>
+            <div class="photo-grid" id="photo-grid">
+              <!-- add <img src="your-image.jpg" alt="desc"> here -->
+              <div class="photo-placeholder">[ your images here ]</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ??? -->
+      <section id="mystery" class="section">
+        <div class="mystery-wrap">
+          <p class="mystery-text">. . .</p>
+          <p id="mystery-line">you're looking in the right place.</p>
+          <p>but this isn't quite it.</p>
+          <p class="small dimmed" id="konami-hint" style="opacity: 0; transition: opacity 1s;">
+            psst — try: ↑ ↑ ↓ ↓ ← → ← → B A
+          </p>
+          <p class="small dimmed" id="click-hint" style="opacity: 0; transition: opacity 1s; margin-top: 2rem;">
+            or maybe just... <span id="hidden-trigger" style="cursor: pointer; color: transparent;">click here</span>
+          </p>
+        </div>
+      </section>
+
+      <!-- HI -->
+      <section id="hi" class="section">
+        <div class="profile-card">
+          <div class="avatar" id="avatar">★</div>
+          <h2>carlos</h2>
+          <p class="bio">human person. collector of things.</p>
+          <p class="bio">maker of stuff. chronic lurker.</p>
+          <div class="social-links">
+            <a href="https://github.com/cvrlosdiaz" target="_blank" rel="noopener">github ↗</a>
+            <!-- add more: instagram, twitter, letterboxd, etc -->
+          </div>
+          <p class="small dimmed contact-note">
+            wanna say hi? find me somewhere online.
+          </p>
+        </div>
+      </section>
+
+    </main>
+
+    <footer>
+      <p>
+        made with ♥ &nbsp;·&nbsp;
+        <span class="blink">★</span>
+        &nbsp;·&nbsp;
+        no cookies, no tracking, just vibes
+      </p>
+      <p class="small dimmed">
+        <span id="visitor-count"></span>
+      </p>
+    </footer>
+
+  </div>
+
+  <!-- Easter egg popup -->
+  <div id="egg-popup" class="popup hidden" role="dialog" aria-modal="true">
+    <div class="popup-box">
+      <p class="popup-title">✨ u found it!! ✨</p>
+      <p>you cracked the code.</p>
+      <p class="small dimmed">there's more on the other side.</p>
+      <a href="secret.html" class="popup-link">enter the void →</a>
+      <br />
+      <button class="nav-btn" id="close-popup">[ close ]</button>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
