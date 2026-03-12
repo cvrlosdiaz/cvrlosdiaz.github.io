@@ -40,16 +40,11 @@
       <section id="home" class="section active">
         <div class="widget now-playing">
           <span class="widget-label">♪ now playing:</span>
+          <span id="song-title">Stateside — PinkPantheress + Zara Larsson</span>
+          <span class="blink" id="play-indicator">▶</span>
         </div>
-        <iframe
-          src="https://open.spotify.com/embed/track/1DwscornXpj8fmOmYVlqZt?utm_source=generator&theme=0"
-          width="100%"
-          height="80"
-          frameborder="0"
-          allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-          loading="lazy"
-          style="border: 2px solid var(--pink); display: block; margin-bottom: 1.5rem;"
-        ></iframe>
+        <!-- hidden YouTube player -->
+        <div id="yt-player" style="position:fixed;width:1px;height:1px;opacity:0;pointer-events:none;"></div>
 
         <div class="home-text">
           <p>wut up ho!</p>
@@ -188,6 +183,16 @@
     </div>
   </div>
 
+  <!-- monkey world -->
+  <div id="monkey-world">
+    <div id="monkey-obj">
+      <div id="monkey-hb-wrap"><div id="monkey-hb"></div></div>
+      <canvas id="monkey-canvas" width="32" height="32"></canvas>
+    </div>
+    <div id="banana-prompt" class="hidden">bby needs a lil banana [ B ]</div>
+  </div>
+
+  <script src="https://www.youtube.com/iframe_api"></script>
   <script src="script.js"></script>
 </body>
 </html>

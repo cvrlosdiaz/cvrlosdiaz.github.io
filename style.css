@@ -436,6 +436,67 @@ footer {
 }
 .secret-content p { margin-bottom: 0.8rem; }
 
+/* ---- Monkey ---- */
+#monkey-world {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  pointer-events: none;
+  z-index: 50;
+}
+#monkey-obj {
+  position: absolute;
+  bottom: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+#monkey-canvas {
+  image-rendering: pixelated;
+  width: 32px;
+  height: 32px;
+}
+#monkey-hb-wrap {
+  width: 28px;
+  height: 4px;
+  background: #333;
+  border: 1px solid #000;
+}
+#monkey-hb {
+  height: 100%;
+  width: 100%;
+  background: var(--green);
+  transition: width 0.4s, background 0.4s;
+}
+#banana-prompt {
+  position: fixed;
+  bottom: 58px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font-px);
+  font-size: 0.45rem;
+  color: var(--yellow);
+  background: #1a0033ee;
+  border: 2px solid var(--yellow);
+  padding: 5px 10px;
+  white-space: nowrap;
+  animation: blink 0.7s step-end infinite;
+  pointer-events: none;
+}
+#banana-prompt.hidden { display: none; }
+
+.banana-item {
+  position: fixed;
+  bottom: 12px;
+  font-size: 1.4rem;
+  pointer-events: none;
+  z-index: 49;
+  line-height: 1;
+}
+
 /* ---- Responsive ---- */
 @media (max-width: 480px) {
   .site-title { font-size: 0.75rem; }
