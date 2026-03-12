@@ -52,8 +52,8 @@
           </div>
           <button id="play-btn" onclick="toggleMusic()">[ ▶ play ]</button>
         </div>
-        <!-- hidden YouTube player -->
-        <div id="yt-player" style="position:fixed;width:1px;height:1px;opacity:0;pointer-events:none;"></div>
+        <!-- hidden YouTube player (off-screen, proper size so YT initializes correctly) -->
+        <div id="yt-player" style="position:fixed;left:-9999px;top:-9999px;width:320px;height:180px;pointer-events:none;"></div>
 
         <div class="home-text">
           <p>wut up ho!</p>
@@ -196,7 +196,7 @@
   <div id="monkey-world">
     <div id="monkey-obj">
       <div id="monkey-hb-wrap"><div id="monkey-hb"></div></div>
-      <div id="monkey-flipper"><span id="monkey-sprite">🐒</span></div>
+      <div id="monkey-flipper"></div>
     </div>
     <div id="banana-prompt" class="hidden">bby needs a lil banana [ B ]</div>
   </div>

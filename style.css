@@ -512,36 +512,12 @@ footer {
   align-items: center;
   gap: 4px;
 }
-#monkey-sprite {
-  font-size: 2rem;
-  display: inline-block;
-  animation: monkey-bob 0.45s steps(2) infinite;
-}
-@keyframes monkey-bob {
-  0%   { transform: translateY(0px); }
-  50%  { transform: translateY(-3px); }
-  100% { transform: translateY(0px); }
-}
-#monkey-sprite.dancing {
-  animation: monkey-dance 0.22s ease-in-out infinite;
-  font-size: 2.3rem;
-}
-@keyframes monkey-dance {
-  0%   { transform: translateY(0px)   rotate(-18deg) scale(1);    }
-  20%  { transform: translateY(-12px) rotate(14deg)  scale(1.1);  }
-  40%  { transform: translateY(-6px)  rotate(-10deg) scale(0.95); }
-  60%  { transform: translateY(-14px) rotate(16deg)  scale(1.15); }
-  80%  { transform: translateY(-4px)  rotate(-8deg)  scale(1);    }
-  100% { transform: translateY(0px)   rotate(-18deg) scale(1);    }
-}
-#monkey-sprite.lounging {
-  animation: none;
-  transform: rotate(90deg) translateX(4px);
-  font-size: 1.9rem;
-  filter: brightness(0.85);
+#monkey-canvas {
+  display: block;
+  image-rendering: auto;
 }
 #monkey-hb-wrap {
-  width: 32px;
+  width: 64px;
   height: 5px;
   background: #222;
   border: 1px solid #000;
