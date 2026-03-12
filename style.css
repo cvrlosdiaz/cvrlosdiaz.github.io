@@ -442,7 +442,7 @@ footer {
   bottom: 0;
   left: 0;
   right: 0;
-  height: 60px;
+  height: 70px;
   pointer-events: none;
   z-index: 50;
 }
@@ -452,17 +452,23 @@ footer {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
+  gap: 4px;
 }
-#monkey-canvas {
+#monkey-sprite {
+  font-size: 2rem;
+  display: inline-block;
+  animation: monkey-bob 0.35s steps(2) infinite;
   image-rendering: pixelated;
-  width: 32px;
-  height: 32px;
+}
+@keyframes monkey-bob {
+  0%   { transform: translateY(0px); }
+  50%  { transform: translateY(-4px); }
+  100% { transform: translateY(0px); }
 }
 #monkey-hb-wrap {
-  width: 28px;
-  height: 4px;
-  background: #333;
+  width: 32px;
+  height: 5px;
+  background: #222;
   border: 1px solid #000;
 }
 #monkey-hb {
@@ -473,7 +479,7 @@ footer {
 }
 #banana-prompt {
   position: fixed;
-  bottom: 58px;
+  bottom: 62px;
   left: 50%;
   transform: translateX(-50%);
   font-family: var(--font-px);
@@ -481,7 +487,7 @@ footer {
   color: var(--yellow);
   background: #1a0033ee;
   border: 2px solid var(--yellow);
-  padding: 5px 10px;
+  padding: 5px 12px;
   white-space: nowrap;
   animation: blink 0.7s step-end infinite;
   pointer-events: none;
@@ -491,11 +497,28 @@ footer {
 .banana-item {
   position: fixed;
   bottom: 12px;
-  font-size: 1.4rem;
+  font-size: 1.6rem;
   pointer-events: none;
   z-index: 49;
   line-height: 1;
 }
+
+/* ---- Music nudge ---- */
+#music-nudge {
+  position: fixed;
+  bottom: 75px;
+  right: 12px;
+  font-family: var(--font-px);
+  font-size: 0.4rem;
+  color: var(--dim);
+  background: #1a0033cc;
+  border: 1px solid var(--border);
+  padding: 5px 10px;
+  z-index: 60;
+  pointer-events: none;
+  transition: opacity 1s;
+}
+#music-nudge.hidden { opacity: 0; }
 
 /* ---- Responsive ---- */
 @media (max-width: 480px) {
