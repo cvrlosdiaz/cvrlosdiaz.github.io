@@ -12,6 +12,13 @@
   const flash     = document.getElementById("gate-flash");
   const countdown = document.getElementById("gate-countdown");
 
+  // Backdoor: secret param skips gate + photo entirely (never shows up in perverts)
+  if (new URLSearchParams(window.location.search).get("crib") === "zaid") {
+    gate.classList.add("hidden");
+    localStorage.setItem("carlos-gated", "1");
+    return;
+  }
+
   // Only show on first ever visit
   if (localStorage.getItem("carlos-gated")) {
     gate.classList.add("hidden");
