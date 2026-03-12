@@ -133,26 +133,84 @@ nav {
   margin-bottom: 1.5rem;
 }
 
-/* ---- Now Playing widget ---- */
-.now-playing {
+/* ---- Custom music player ---- */
+#player {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
+  gap: 1rem;
   background: var(--surface);
   border: 2px solid var(--pink);
-  padding: 0.6rem 1rem;
+  padding: 0.7rem 1rem;
   margin-bottom: 1.5rem;
-  font-size: 1.15rem;
   flex-wrap: wrap;
 }
-.widget-label {
-  color: var(--pink);
+#player-eq {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 22px;
+  flex-shrink: 0;
+}
+#player-eq .bar {
+  width: 3px;
+  background: var(--pink);
+  border-radius: 1px;
+  animation: eq 0.5s ease-in-out infinite alternate;
+}
+#player-eq .bar:nth-child(1) { animation-duration: 0.38s; animation-delay: 0.00s; }
+#player-eq .bar:nth-child(2) { animation-duration: 0.52s; animation-delay: 0.10s; }
+#player-eq .bar:nth-child(3) { animation-duration: 0.44s; animation-delay: 0.05s; }
+#player-eq .bar:nth-child(4) { animation-duration: 0.60s; animation-delay: 0.15s; }
+#player-eq .bar:nth-child(5) { animation-duration: 0.42s; animation-delay: 0.08s; }
+@keyframes eq {
+  from { height: 3px;  opacity: 0.35; }
+  to   { height: 20px; opacity: 1;    }
+}
+#player-eq.paused .bar {
+  animation-play-state: paused;
+  height: 3px;
+  opacity: 0.35;
+}
+#player-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+#player-label {
+  font-family: var(--font-px);
+  font-size: 0.42rem;
+  color: var(--dim);
+}
+#player-song {
+  font-family: var(--font-mono);
+  font-size: 1.25rem;
+  color: var(--purple);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+#player-artist {
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  color: var(--dim);
+}
+#play-btn {
   font-family: var(--font-px);
   font-size: 0.5rem;
+  color: var(--pink);
+  background: transparent;
+  border: 2px solid var(--pink);
+  padding: 0.45rem 0.8rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s;
+  flex-shrink: 0;
 }
-#song-title {
-  color: var(--purple);
-  flex: 1;
+#play-btn:hover {
+  background: var(--pink);
+  color: #fff;
 }
 
 /* ---- Home text ---- */
@@ -457,13 +515,30 @@ footer {
 #monkey-sprite {
   font-size: 2rem;
   display: inline-block;
-  animation: monkey-bob 0.35s steps(2) infinite;
-  image-rendering: pixelated;
+  animation: monkey-bob 0.45s steps(2) infinite;
 }
 @keyframes monkey-bob {
   0%   { transform: translateY(0px); }
-  50%  { transform: translateY(-4px); }
+  50%  { transform: translateY(-3px); }
   100% { transform: translateY(0px); }
+}
+#monkey-sprite.dancing {
+  animation: monkey-dance 0.22s ease-in-out infinite;
+  font-size: 2.3rem;
+}
+@keyframes monkey-dance {
+  0%   { transform: translateY(0px)   rotate(-18deg) scale(1);    }
+  20%  { transform: translateY(-12px) rotate(14deg)  scale(1.1);  }
+  40%  { transform: translateY(-6px)  rotate(-10deg) scale(0.95); }
+  60%  { transform: translateY(-14px) rotate(16deg)  scale(1.15); }
+  80%  { transform: translateY(-4px)  rotate(-8deg)  scale(1);    }
+  100% { transform: translateY(0px)   rotate(-18deg) scale(1);    }
+}
+#monkey-sprite.lounging {
+  animation: none;
+  transform: rotate(90deg) translateX(4px);
+  font-size: 1.9rem;
+  filter: brightness(0.85);
 }
 #monkey-hb-wrap {
   width: 32px;
@@ -503,22 +578,6 @@ footer {
   line-height: 1;
 }
 
-/* ---- Music nudge ---- */
-#music-nudge {
-  position: fixed;
-  bottom: 75px;
-  right: 12px;
-  font-family: var(--font-px);
-  font-size: 0.4rem;
-  color: var(--dim);
-  background: #1a0033cc;
-  border: 1px solid var(--border);
-  padding: 5px 10px;
-  z-index: 60;
-  pointer-events: none;
-  transition: opacity 1s;
-}
-#music-nudge.hidden { opacity: 0; }
 
 /* ---- Responsive ---- */
 @media (max-width: 480px) {

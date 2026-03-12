@@ -38,10 +38,19 @@
 
       <!-- HOME -->
       <section id="home" class="section active">
-        <div class="widget now-playing">
-          <span class="widget-label">♪ now playing:</span>
-          <span id="song-title">Stateside — PinkPantheress + Zara Larsson</span>
-          <span class="blink" id="play-indicator">▶</span>
+        <!-- custom music player -->
+        <div id="player">
+          <div id="player-eq" class="paused">
+            <span class="bar"></span><span class="bar"></span>
+            <span class="bar"></span><span class="bar"></span>
+            <span class="bar"></span>
+          </div>
+          <div id="player-info">
+            <span id="player-label">♪ now playing</span>
+            <div id="player-song">Stateside</div>
+            <div id="player-artist">PinkPantheress + Zara Larsson</div>
+          </div>
+          <button id="play-btn" onclick="toggleMusic()">[ ▶ play ]</button>
         </div>
         <!-- hidden YouTube player -->
         <div id="yt-player" style="position:fixed;width:1px;height:1px;opacity:0;pointer-events:none;"></div>
@@ -192,8 +201,6 @@
     <div id="banana-prompt" class="hidden">bby needs a lil banana [ B ]</div>
   </div>
 
-  <!-- music nudge -->
-  <div id="music-nudge">♪ click anywhere to start music</div>
 
   <script src="https://www.youtube.com/iframe_api"></script>
   <script src="script.js"></script>

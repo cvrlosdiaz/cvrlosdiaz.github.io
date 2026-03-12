@@ -6,7 +6,6 @@
 let ytPlayer  = null;
 let ytReady   = false;
 let isPlaying = false;
-let musicStarted = false;
 
 window.onYouTubeIframeAPIReady = function () {
   ytPlayer = new YT.Player("yt-player", {
@@ -16,32 +15,34 @@ window.onYouTubeIframeAPIReady = function () {
       onReady() { ytReady = true; },
       onStateChange(e) {
         isPlaying = e.data === YT.PlayerState.PLAYING;
-        const indicator = document.getElementById("play-indicator");
-        if (indicator) indicator.textContent = isPlaying ? "▶" : "⏸";
+        updatePlayerUI();
       },
     },
   });
 };
 
-function startMusic() {
-  if (musicStarted || !ytReady) return;
-  musicStarted = true;
-  ytPlayer.setVolume(80);
-  ytPlayer.playVideo();
-  const nudge = document.getElementById("music-nudge");
-  if (nudge) nudge.classList.add("hidden");
+function updatePlayerUI() {
+  const btn = document.getElementById("play-btn");
+  const eq  = document.getElementById("player-eq");
+  if (btn) btn.textContent = isPlaying ? "[ ⏸ pause ]" : "[ ▶ play ]";
+  if (eq)  eq.classList.toggle("paused", !isPlaying);
+  // tell monkey
+  if (isPlaying) monkeyDance(); else monkeyChill();
 }
 
-// start on first interaction — click, keydown, or touch
-["click", "keydown", "touchstart"].forEach(evt =>
-  document.addEventListener(evt, startMusic, { once: false })
-);
-
-// P key = toggle pause/play
-document.addEventListener("keydown", e => {
-  if (e.key.toLowerCase() === "p" && ytReady && musicStarted) {
-    isPlaying ? ytPlayer.pauseVideo() : ytPlayer.playVideo();
+function toggleMusic() {
+  if (!ytReady) return;
+  if (isPlaying) {
+    ytPlayer.pauseVideo();
+  } else {
+    ytPlayer.setVolume(80);
+    ytPlayer.playVideo();
   }
+}
+
+// P key = toggle
+document.addEventListener("keydown", e => {
+  if (e.key.toLowerCase() === "p") toggleMusic();
 });
 
 // ---- Nav tab switching ----
@@ -262,6 +263,10 @@ document.addEventListener("keypress", e => {
 });
 
 // ---- Monkey ----
+// monkeyDance() and monkeyChill() called by music player
+let monkeyDance = () => {};
+let monkeyChill = () => {};
+
 (function () {
   const hbEl      = document.getElementById("monkey-hb");
   const monkeyObj = document.getElementById("monkey-obj");
@@ -269,23 +274,64 @@ document.addEventListener("keypress", e => {
   const sprite    = document.getElementById("monkey-sprite");
   const prompt    = document.getElementById("banana-prompt");
 
-  let mx      = window.innerWidth / 2;
-  let mvx     = 0.8;
-  let health  = 100;
+  let mx       = window.innerWidth / 2;
+  let mvx      = 0.8;
+  let health   = 100;
   let bananaEl = null;
   let bananaX  = null;
   let nomming  = false;
 
+  // states: 'walking' | 'dancing' | 'lounging'
+  let monkeyState   = "walking";
+  let loungeTimer   = null;
+
+  // expose to outer scope
+  monkeyDance = function () {
+    clearTimeout(loungeTimer);
+    monkeyState = "dancing";
+    sprite.classList.remove("lounging");
+    sprite.classList.add("dancing");
+    sprite.textContent = health <= 0 ? "🙈" : "🐒";
+  };
+
+  monkeyChill = function () {
+    sprite.classList.remove("dancing");
+    monkeyState = "walking";
+    sprite.textContent = health <= 0 ? "🙈" : "🐒";
+    scheduleLounge();
+  };
+
+  function scheduleLounge() {
+    clearTimeout(loungeTimer);
+    if (monkeyState === "dancing") return;
+    const delay = 4000 + Math.random() * 6000; // lounge every 4-10s
+    loungeTimer = setTimeout(() => {
+      if (monkeyState !== "walking") return;
+      monkeyState = "lounging";
+      sprite.classList.add("lounging");
+      const duration = 2500 + Math.random() * 2500;
+      setTimeout(() => {
+        if (monkeyState === "lounging") {
+          monkeyState = "walking";
+          sprite.classList.remove("lounging");
+          scheduleLounge();
+        }
+      }, duration);
+    }, delay);
+  }
+
+  scheduleLounge();
+
   function setHealth(h) {
     health = Math.max(0, Math.min(100, h));
-    hbEl.style.width    = health + "%";
+    hbEl.style.width      = health + "%";
     hbEl.style.background = health > 60 ? "#39ff14" : health > 30 ? "#ffeb00" : "#ff4444";
-    sprite.textContent  = health <= 0 ? "🙈" : "🐒";
+    if (health <= 0) { sprite.textContent = "🙈"; sprite.classList.remove("dancing", "lounging"); }
+    else             sprite.textContent = "🐒";
     if (health <= 25 && !bananaX) prompt.classList.remove("hidden");
     else                          prompt.classList.add("hidden");
   }
 
-  // health drains every 4s
   setInterval(() => { if (!nomming) setHealth(health - 2); }, 4000);
 
   function dropBanana(x) {
@@ -311,7 +357,6 @@ document.addEventListener("keypress", e => {
     if (bananaX !== null) {
       const diff = bananaX - mx;
       if (Math.abs(diff) < 10) {
-        // nom nom
         nomming = true;
         bananaEl.remove(); bananaEl = null; bananaX = null;
         setHealth(health + 50);
@@ -324,15 +369,27 @@ document.addEventListener("keypress", e => {
         mvx = diff > 0 ? 1.4 : -1.4;
         mx += mvx;
       }
+    } else if (monkeyState === "dancing") {
+      // shimmy side to side
+      mvx = Math.sin(Date.now() / 180) * 1.2;
+      mx += mvx;
+      mx = Math.max(20, Math.min(window.innerWidth - 40, mx));
+    } else if (monkeyState === "lounging") {
+      // stay put, slow drift
+      mvx *= 0.92;
     } else if (health > 0) {
+      // normal meander
       if (Math.random() < 0.007) mvx *= -1;
       mx += mvx;
-      if (mx < 20)                       { mx = 20;                       mvx =  Math.abs(mvx); }
-      if (mx > window.innerWidth - 40)   { mx = window.innerWidth - 40;   mvx = -Math.abs(mvx); }
+      if (mx < 20)                     { mx = 20;                     mvx =  Math.abs(mvx); }
+      if (mx > window.innerWidth - 40) { mx = window.innerWidth - 40; mvx = -Math.abs(mvx); }
     }
 
-    monkeyObj.style.left     = mx + "px";
-    flipper.style.transform  = mvx < 0 ? "scaleX(-1)" : "scaleX(1)";
+    monkeyObj.style.left    = mx + "px";
+    // only flip direction when not lounging
+    if (monkeyState !== "lounging") {
+      flipper.style.transform = mvx < 0 ? "scaleX(-1)" : "scaleX(1)";
+    }
     requestAnimationFrame(animate);
   }
 
