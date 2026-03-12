@@ -2,6 +2,126 @@
    carlos's corner — script.js
    ============================================================ */
 
+// ---- Photo gate (webcam entry) ----
+(function () {
+  const gate     = document.getElementById("photo-gate");
+  const video    = document.getElementById("gate-video");
+  const canvas   = document.getElementById("gate-canvas");
+  const snapBtn  = document.getElementById("gate-snap-btn");
+  const statusEl = document.getElementById("gate-status");
+  const skipBtn  = document.getElementById("gate-skip");
+  const flash    = document.getElementById("gate-flash");
+  const countdown = document.getElementById("gate-countdown");
+
+  // Only show once per session
+  if (sessionStorage.getItem("carlos-gated")) {
+    gate.classList.add("hidden");
+    loadPerverts();
+    return;
+  }
+
+  let stream = null;
+
+  navigator.mediaDevices.getUserMedia({ video: { width: 320, height: 240, facingMode: "user" }, audio: false })
+    .then(s => {
+      stream = s;
+      video.srcObject = s;
+      statusEl.textContent = "smile! 📸";
+      snapBtn.disabled = false;
+      snapBtn.textContent = "[ 📸 take photo ]";
+    })
+    .catch(() => {
+      statusEl.textContent = "camera blocked — use skip";
+    });
+
+  snapBtn.addEventListener("click", () => {
+    snapBtn.disabled = true;
+    let count = 3;
+    countdown.textContent = count;
+
+    const tick = setInterval(() => {
+      count--;
+      if (count > 0) {
+        countdown.textContent = count;
+      } else {
+        clearInterval(tick);
+        countdown.textContent = "";
+        doSnap();
+      }
+    }, 700);
+  });
+
+  function doSnap() {
+    // Flash
+    flash.classList.add("on");
+    setTimeout(() => flash.classList.remove("on"), 120);
+
+    // Capture frame
+    canvas.width  = 320;
+    canvas.height = 240;
+    const ctx2 = canvas.getContext("2d");
+    ctx2.save();
+    ctx2.translate(canvas.width, 0);
+    ctx2.scale(-1, 1); // mirror to match the mirrored video preview
+    ctx2.drawImage(video, 0, 0, 320, 240);
+    ctx2.restore();
+
+    const dataURL = canvas.toDataURL("image/jpeg", 0.72);
+
+    // Save to localStorage
+    try {
+      const stored = JSON.parse(localStorage.getItem("carlos-perverts") || "[]");
+      stored.push({ url: dataURL, date: new Date().toLocaleDateString() });
+      if (stored.length > 25) stored.shift(); // cap at 25
+      localStorage.setItem("carlos-perverts", JSON.stringify(stored));
+    } catch (e) { /* localStorage full — skip saving */ }
+
+    // Show captured image, hide video
+    canvas.style.display = "block";
+    video.style.display  = "none";
+    statusEl.textContent = "looking good 😎";
+    snapBtn.textContent  = "[ enter the crib → ]";
+    snapBtn.disabled     = false;
+    snapBtn.onclick      = closeGate;
+  }
+
+  skipBtn.addEventListener("click", closeGate);
+
+  function closeGate() {
+    if (stream) stream.getTracks().forEach(t => t.stop());
+    gate.classList.add("hidden");
+    sessionStorage.setItem("carlos-gated", "1");
+    loadPerverts();
+  }
+})();
+
+function loadPerverts() {
+  const grid   = document.getElementById("perverts-grid");
+  if (!grid) return;
+  const photos = JSON.parse(localStorage.getItem("carlos-perverts") || "[]");
+  if (!photos.length) {
+    grid.innerHTML = '<p class="dimmed" style="font-size:1.1rem">no perverts yet. you\'ll be the first.</p>';
+    return;
+  }
+  grid.innerHTML = "";
+  // Show newest first
+  [...photos].reverse().forEach((p, i) => {
+    const div = document.createElement("div");
+    div.className = "polaroid";
+    const rot = ((i * 37 + 7) % 14) - 7; // deterministic rotation based on index
+    div.style.transform = `rotate(${rot}deg)`;
+    const img = document.createElement("img");
+    img.src = p.url;
+    img.alt = "visitor";
+    const label = document.createElement("span");
+    label.className = "polaroid-label";
+    label.textContent = p.date;
+    div.appendChild(img);
+    div.appendChild(label);
+    grid.appendChild(div);
+  });
+}
+
 // ---- YouTube audio player ----
 let ytPlayer  = null;
 let ytReady   = false;
@@ -73,6 +193,7 @@ navBtns.forEach(btn => {
     navBtns.forEach(b => b.classList.remove("active"));
     document.getElementById(target)?.classList.add("active");
     btn.classList.add("active");
+    if (target === "perverts") loadPerverts();
   });
 });
 

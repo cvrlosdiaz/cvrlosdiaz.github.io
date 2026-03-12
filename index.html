@@ -32,6 +32,7 @@
       <button class="nav-btn" data-target="stuff">[ stuff ]</button>
       <button class="nav-btn" data-target="mystery">[ ??? ]</button>
       <button class="nav-btn" data-target="hi">[ hi ]</button>
+      <button class="nav-btn" data-target="perverts">[ perverts ]</button>
     </nav>
 
     <main>
@@ -147,6 +148,13 @@
         </div>
       </section>
 
+      <!-- PERVERTS -->
+      <section id="perverts" class="section">
+        <h2 class="section-title">// perverts</h2>
+        <p class="section-sub">everyone who's been here.</p>
+        <div id="perverts-grid" class="perverts-grid"></div>
+      </section>
+
       <!-- HI -->
       <section id="hi" class="section">
         <div class="profile-card">
@@ -189,6 +197,23 @@
       <a href="secret.html" class="popup-link">enter the void →</a>
       <br />
       <button class="nav-btn" id="close-popup">[ close ]</button>
+    </div>
+  </div>
+
+  <!-- Photo gate (webcam entry) -->
+  <div id="photo-gate" class="photo-gate">
+    <div class="gate-box">
+      <p class="gate-title">★ entry fee ★</p>
+      <p class="gate-sub">one (1) photo, please.</p>
+      <div class="gate-preview-wrap">
+        <video id="gate-video" autoplay playsinline muted></video>
+        <canvas id="gate-canvas"></canvas>
+        <div id="gate-flash" class="gate-flash"></div>
+        <div id="gate-countdown" class="gate-countdown"></div>
+      </div>
+      <button id="gate-snap-btn" class="nav-btn" disabled>[ 📸 take photo ]</button>
+      <p class="gate-status" id="gate-status">starting camera<span class="ellipsis"></span></p>
+      <button id="gate-skip">no camera / skip</button>
     </div>
   </div>
 

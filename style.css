@@ -556,9 +556,149 @@ footer {
 }
 
 
+/* ---- Photo gate (webcam entry modal) ---- */
+.photo-gate {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 0, 20, 0.96);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.photo-gate.hidden { display: none; }
+
+.gate-box {
+  text-align: center;
+  padding: 2rem 2.5rem;
+  background: var(--bg);
+  border: 3px solid var(--purple);
+  box-shadow: 0 0 40px var(--purple), 0 0 80px var(--pink);
+  max-width: 420px;
+  width: 92vw;
+}
+
+.gate-title {
+  font-family: var(--font-px);
+  font-size: 0.7rem;
+  color: var(--pink);
+  margin-bottom: 0.4rem;
+  letter-spacing: 0.1em;
+}
+.gate-sub {
+  color: var(--dim);
+  font-size: 1.05rem;
+  margin-bottom: 1.2rem;
+}
+
+.gate-preview-wrap {
+  position: relative;
+  width: 280px;
+  height: 210px;
+  margin: 0 auto 1.2rem;
+  background: #000;
+  border: 2px solid var(--border);
+  overflow: hidden;
+}
+#gate-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transform: scaleX(-1); /* mirror */
+}
+#gate-canvas {
+  display: none;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.gate-flash {
+  position: absolute;
+  inset: 0;
+  background: white;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.05s;
+}
+.gate-flash.on { opacity: 1; }
+
+.gate-countdown {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-px);
+  font-size: 3rem;
+  color: white;
+  text-shadow: 0 0 20px var(--pink);
+  pointer-events: none;
+}
+
+.gate-status {
+  font-size: 1rem;
+  color: var(--dim);
+  margin: 0.8rem 0 0.5rem;
+}
+
+#gate-skip {
+  background: none;
+  border: none;
+  color: var(--dim);
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  cursor: pointer;
+  margin-top: 0.5rem;
+  opacity: 0.6;
+  text-decoration: underline;
+}
+#gate-skip:hover { opacity: 1; }
+
+/* ---- Polaroid photos ---- */
+.perverts-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+  padding: 1rem 0;
+  align-items: flex-start;
+}
+
+.polaroid {
+  background: #fff;
+  padding: 10px 10px 36px;
+  box-shadow: 3px 3px 12px rgba(0,0,0,0.35);
+  display: inline-block;
+  cursor: default;
+  transition: transform 0.2s, box-shadow 0.2s;
+  flex-shrink: 0;
+}
+.polaroid:hover {
+  transform: scale(1.07) rotate(0deg) !important;
+  box-shadow: 6px 6px 20px rgba(0,0,0,0.5);
+  z-index: 10;
+  position: relative;
+}
+.polaroid img {
+  display: block;
+  width: 180px;
+  height: 180px;
+  object-fit: cover;
+}
+.polaroid-label {
+  display: block;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: #333;
+  margin-top: 6px;
+}
+
 /* ---- Responsive ---- */
 @media (max-width: 480px) {
   .site-title { font-size: 0.75rem; }
   .nav-btn    { font-size: 0.45rem; padding: 0.4rem 0.6rem; }
   .stuff-grid { grid-template-columns: 1fr; }
+  .gate-preview-wrap { width: 240px; height: 180px; }
+  .polaroid img { width: 140px; height: 140px; }
 }
