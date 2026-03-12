@@ -517,8 +517,8 @@ footer {
   image-rendering: auto;
 }
 #monkey-hb-wrap {
-  width: 64px;
-  height: 5px;
+  width: 36px;
+  height: 4px;
   background: #222;
   border: 1px solid #000;
 }

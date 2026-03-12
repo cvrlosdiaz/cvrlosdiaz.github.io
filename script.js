@@ -289,33 +289,36 @@ let monkeyChill = () => {};
   const flipper   = document.getElementById("monkey-flipper");
   const prompt    = document.getElementById("banana-prompt");
 
-  // Create canvas
-  const CW = 80, CH = 112;
+  // Canvas drawn at 2x resolution, displayed at half size for crispness
+  // Display size: 40×56px  (4x smaller area than before)
+  const CW = 80, CH = 112, DW = 40, DH = 56;
   const canvas = document.createElement("canvas");
   canvas.id = "monkey-canvas";
   canvas.width = CW; canvas.height = CH;
-  canvas.style.width = CW + "px"; canvas.style.height = CH + "px";
+  canvas.style.width = DW + "px"; canvas.style.height = DH + "px";
   flipper.appendChild(canvas);
   const ctx = canvas.getContext("2d");
 
-  // Colors (Boots palette)
-  const FUR   = "#E07528";
-  const LIGHT = "#F5C090";
-  const BOOT  = "#CC2020";
-  const BOOTD = "#8B1010";
+  // ---- Boots-accurate color palette ----
+  const FUR   = "#E8A028";   // warm golden-orange
+  const LIGHT = "#F5D898";   // cream face / belly
+  const BOOT  = "#E02020";   // bright red boots
+  const BOOTD = "#8B0E0E";   // boot shadow / sole
   const WHITE = "#FFFFFF";
-  const DARK  = "#180820";
-  const NOSE  = "#5C2A00";
-  const LINE  = "#7A3A00";
-  const PINK  = "#FFB0B0";
+  const DARK  = "#0E0620";   // deep pupils
+  const NOSE  = "#3A1800";
+  const LINE  = "#7A4010";   // warm brown outline
+  const PINK  = "#FFB8B8";   // inner ear
 
-  // State
+  // ---- State ----
   let mx          = window.innerWidth / 2;
   let mvx         = 0.8;
   let facing      = 1;
   let health      = 100;
-  let bananaEl    = null;
-  let bananaX     = null;
+  let bananaEl    = null;   // the DOM banana element
+  let bananaX     = null;   // target x for monkey
+  let bananaState = "none"; // "falling" | "landed" | "ready"
+  let bananaPhys  = null;   // { x, y, vy, splitFrame }
   let nomming     = false;
   let monkeyState = "walking";
   let loungeTimer = null;
@@ -334,45 +337,61 @@ let monkeyChill = () => {};
     ctx.fillStyle = fill; ctx.strokeStyle = LINE; ctx.lineWidth = lw;
     ctx.fill(); ctx.stroke();
   }
-  function boot(bx, by) {
-    // Shoe body
+
+  // Boots: tall red boot drawn at current ctx origin
+  function drawBoot() {
+    // Leg / boot shaft
     ctx.beginPath();
-    ctx.ellipse(bx + 3, by, 11, 6, -0.15, 0, Math.PI * 2);
+    ctx.ellipse(0, -6, 5, 8, 0, 0, Math.PI * 2);
     ctx.fillStyle = BOOT; ctx.strokeStyle = BOOTD; ctx.lineWidth = 1.5;
     ctx.fill(); ctx.stroke();
-    // Ankle cuff
+    // Foot
     ctx.beginPath();
-    ctx.ellipse(bx - 4, by - 3, 5, 4, 0, 0, Math.PI * 2);
-    ctx.fillStyle = BOOT; ctx.strokeStyle = BOOTD; ctx.lineWidth = 1;
+    ctx.ellipse(3, 0, 9, 5, -0.1, 0, Math.PI * 2);
+    ctx.fillStyle = BOOT; ctx.strokeStyle = BOOTD; ctx.lineWidth = 1.5;
     ctx.fill(); ctx.stroke();
+    // Cuff fold
+    ctx.beginPath();
+    ctx.ellipse(0, -12, 5.5, 2.5, 0, 0, Math.PI * 2);
+    ctx.fillStyle = "#FF4444"; ctx.fill();
     // Shine
     ctx.beginPath();
-    ctx.ellipse(bx, by - 2, 4, 2, -0.2, 0, Math.PI * 2);
-    ctx.fillStyle = "rgba(255,255,255,0.25)"; ctx.fill();
+    ctx.ellipse(1, -1, 3, 1.5, -0.2, 0, Math.PI * 2);
+    ctx.fillStyle = "rgba(255,255,255,0.3)"; ctx.fill();
   }
-  function ear(ex, ey) {
+
+  function drawEar(ex, ey) {
     circ(ex, ey, 9, FUR, 1.5);
-    circ(ex, ey, 5.5, PINK, 0);
+    circ(ex, ey, 5, PINK, 0);
   }
-  function eye(ex, ey, dead) {
-    // White
+
+  function drawEye(ex, ey, dead) {
+    // Outer white — Boots has HUGE eyes
     ctx.beginPath();
-    ctx.ellipse(ex, ey, 6, 7.5, 0, 0, Math.PI * 2);
-    ctx.fillStyle = WHITE; ctx.strokeStyle = LINE; ctx.lineWidth = 1;
+    ctx.ellipse(ex, ey, 7, 8.5, 0, 0, Math.PI * 2);
+    ctx.fillStyle = WHITE; ctx.strokeStyle = LINE; ctx.lineWidth = 1.2;
     ctx.fill(); ctx.stroke();
     if (dead) {
-      ctx.strokeStyle = DARK; ctx.lineWidth = 2; ctx.lineCap = "round";
+      ctx.strokeStyle = "#333"; ctx.lineWidth = 2.5; ctx.lineCap = "round";
       ctx.beginPath(); ctx.moveTo(ex-4,ey-4); ctx.lineTo(ex+4,ey+4); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(ex+4,ey-4); ctx.lineTo(ex-4,ey+4); ctx.stroke();
     } else {
+      // Iris
+      ctx.beginPath();
+      ctx.ellipse(ex+1, ey+1, 4.5, 5.5, 0, 0, Math.PI * 2);
+      ctx.fillStyle = "#4A2800"; ctx.fill();
       // Pupil
       ctx.beginPath();
-      ctx.ellipse(ex + 1, ey + 1, 3.5, 5, 0, 0, Math.PI * 2);
+      ctx.ellipse(ex+1, ey+1, 3, 3.8, 0, 0, Math.PI * 2);
       ctx.fillStyle = DARK; ctx.fill();
-      // Shine
+      // Big shine (very Boots)
       ctx.beginPath();
-      ctx.arc(ex + 3, ey - 2, 1.5, 0, Math.PI * 2);
+      ctx.arc(ex+3.5, ey-2.5, 2.2, 0, Math.PI * 2);
       ctx.fillStyle = WHITE; ctx.fill();
+      // Small second shine
+      ctx.beginPath();
+      ctx.arc(ex-1, ey+2.5, 1, 0, Math.PI * 2);
+      ctx.fillStyle = "rgba(255,255,255,0.6)"; ctx.fill();
     }
   }
 
@@ -382,132 +401,157 @@ let monkeyChill = () => {};
     ctx.save();
     if (facing === -1) { ctx.translate(CW, 0); ctx.scale(-1, 1); }
 
-    // Animation values
-    let sw = 0, by = 0, armUp = 0;
+    // ---- Per-limb animation angles ----
+    let armFR = 0.3, armBR = -0.3;
+    let armFFR = 0,  armBFR = 0;
+    let legFR = 0,   legBR = 0;
+    let by = 0, bodyLean = 0;
+
     if (state === "dancing") {
-      sw     = Math.sin(t * 11) * 0.55;
-      by     = Math.abs(Math.sin(t * 11)) * 9;
-      armUp  = Math.cos(t * 9) * 0.65;
+      const beat = Math.tanh(Math.sin(t * 9) * 6);
+      const sway = Math.sin(t * 4.5);
+      // Disco: alternating arm up/down point
+      armFR  = -0.35 - beat * 1.05;
+      armBR  = -0.35 + beat * 1.05;
+      armFFR =  beat * 0.55;
+      armBFR = -beat * 0.55;
+      legFR  =  beat * 0.70;
+      legBR  = -beat * 0.70;
+      by         = Math.abs(Math.sin(t * 9)) * 16;
+      bodyLean   = sway * 0.22;
     } else if (state === "walking") {
-      sw = Math.sin(t * 5.5) * 0.38;
-      by = Math.abs(Math.sin(t * 5.5)) * 2.5;
+      const sw = Math.sin(t * 5.5) * 0.40;
+      armFR  =  0.3 - sw * 0.9;
+      armBR  = -0.3 + sw * 0.9;
+      legFR  =  sw * 0.72;
+      legBR  = -sw * 0.72;
+      by     = Math.abs(Math.sin(t * 5.5)) * 2.5;
     } else if (state === "lounging") {
-      sw = 0.15; // slightly splayed out
+      armFR  =  1.0;
+      armBR  = -1.0;
+      legFR  = -0.7;
+      legBR  =  0.7;
     }
 
-    const bX = 40, bY = 72 - by;
-    const hX = 40, hY = bY - 33;
+    // Boots has a big head — push body down a bit
+    const bX = 40, bY = 76 - by;
+    const hX = 40, hY = bY - 36;
 
-    // Tail (wags with music)
+    // Tail
     ctx.save();
     ctx.strokeStyle = FUR; ctx.lineWidth = 5; ctx.lineCap = "round";
-    const tw = Math.sin(t * (state === "dancing" ? 8 : 3)) * 8;
+    const tw = Math.sin(t * (state === "dancing" ? 12 : 3)) * (state === "dancing" ? 14 : 8);
     ctx.beginPath();
-    ctx.moveTo(bX - 14, bY - 8);
-    ctx.bezierCurveTo(bX-30, bY-12+tw*0.3, bX-36, bY-30+tw, bX-28, bY-46+tw*1.3);
+    ctx.moveTo(bX - 13, bY - 8);
+    ctx.bezierCurveTo(bX-28, bY-12+tw*0.3, bX-34, bY-28+tw, bX-26, bY-44+tw*1.3);
     ctx.stroke();
     ctx.restore();
 
-    // --- Back arm ---
+    // Body lean wrapper
     ctx.save();
-    ctx.translate(bX - 15, bY - 19);
-    ctx.rotate(-0.3 + sw * 0.9 + armUp);
-    oval(0, 9, 4.5, 10, FUR);       // upper arm
-    ctx.translate(0, 17); ctx.rotate(sw * 0.25);
-    oval(0, 6.5, 3.5, 7, FUR);     // forearm
-    ctx.translate(0, 12);
-    circ(0, 0, 4, LIGHT);           // hand
+    ctx.translate(bX, bY - 14); ctx.rotate(bodyLean); ctx.translate(-bX, -(bY - 14));
+
+    // Back arm
+    ctx.save();
+    ctx.translate(bX - 14, bY - 20);
+    ctx.rotate(armBR);
+    oval(0, 8, 4, 9, FUR);
+    ctx.translate(0, 15); ctx.rotate(armBFR);
+    oval(0, 6, 3, 7, FUR);
+    ctx.translate(0, 11); circ(0, 0, 3.5, LIGHT);
     ctx.restore();
 
-    // --- Back leg ---
+    // Back leg
     ctx.save();
-    ctx.translate(bX - 10, bY + 2);
-    ctx.rotate(state === "lounging" ? 0.6 : -sw * 0.7);
-    oval(0, 9, 6, 10, FUR);
-    ctx.translate(0, 17); ctx.rotate(sw * 0.25 + 0.1);
-    oval(0, 7, 5, 8, FUR);
-    ctx.translate(0, 13);
-    boot(-5, 0);
+    ctx.translate(bX - 9, bY + 2);
+    ctx.rotate(legBR);
+    oval(0, 8, 5.5, 9, FUR);
+    ctx.translate(0, 15); ctx.rotate(legBR * 0.3 + 0.1);
+    oval(0, 6, 4.5, 7, FUR);
+    ctx.translate(0, 11); drawBoot();
     ctx.restore();
 
-    // --- Body ---
+    // Body — Boots has a smallish oval body
     ctx.save();
     ctx.translate(bX, bY);
-    // Torso
     ctx.beginPath();
-    ctx.ellipse(0, -12, 19, 23, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, -11, 17, 20, 0, 0, Math.PI * 2);
     ctx.fillStyle = FUR; ctx.strokeStyle = LINE; ctx.lineWidth = 1.5;
     ctx.fill(); ctx.stroke();
     // Belly
     ctx.beginPath();
-    ctx.ellipse(0, -8, 12, 16, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, -8, 10, 14, 0, 0, Math.PI * 2);
     ctx.fillStyle = LIGHT; ctx.fill();
     ctx.restore();
 
-    // --- Front leg ---
+    // Front leg
     ctx.save();
-    ctx.translate(bX + 10, bY + 2);
-    ctx.rotate(state === "lounging" ? -0.6 : sw * 0.7);
-    oval(0, 9, 6, 10, FUR);
-    ctx.translate(0, 17); ctx.rotate(-sw * 0.25 + 0.1);
-    oval(0, 7, 5, 8, FUR);
-    ctx.translate(0, 13);
-    boot(-5, 0);
+    ctx.translate(bX + 9, bY + 2);
+    ctx.rotate(legFR);
+    oval(0, 8, 5.5, 9, FUR);
+    ctx.translate(0, 15); ctx.rotate(legFR * 0.3 + 0.1);
+    oval(0, 6, 4.5, 7, FUR);
+    ctx.translate(0, 11); drawBoot();
     ctx.restore();
 
-    // --- Front arm ---
+    // Front arm
     ctx.save();
-    ctx.translate(bX + 15, bY - 19);
-    ctx.rotate(0.3 - sw * 0.9 - armUp);
-    oval(0, 9, 4.5, 10, FUR);
-    ctx.translate(0, 17); ctx.rotate(-sw * 0.25);
-    oval(0, 6.5, 3.5, 7, FUR);
-    ctx.translate(0, 12);
-    circ(0, 0, 4, LIGHT);
+    ctx.translate(bX + 14, bY - 20);
+    ctx.rotate(armFR);
+    oval(0, 8, 4, 9, FUR);
+    ctx.translate(0, 15); ctx.rotate(armFFR);
+    oval(0, 6, 3, 7, FUR);
+    ctx.translate(0, 11); circ(0, 0, 3.5, LIGHT);
     ctx.restore();
 
-    // --- Head ---
+    ctx.restore(); // body lean
+
+    // Head — proportionally large like Boots
+    const headBob = state === "dancing" ? Math.sin(t * 9) * 3.5 : 0;
     ctx.save();
-    ctx.translate(hX, hY);
-    ear(-15, -1); ear(15, -1);
+    ctx.translate(hX, hY + headBob);
+    ctx.rotate(state === "dancing" ? Math.sin(t * 4.5) * 0.2 : 0);
 
-    // Head circle
-    circ(0, 0, 19, FUR, 1.5);
+    drawEar(-16, -2); drawEar(16, -2);
 
-    // Muzzle
+    // Head — bigger radius for Boots' large round head
+    circ(0, 0, 21, FUR, 1.5);
+
+    // Cream muzzle (lower half of face, very prominent)
     ctx.beginPath();
-    ctx.ellipse(0, 7.5, 12, 10, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, 9, 14, 12, 0, 0, Math.PI * 2);
     ctx.fillStyle = LIGHT; ctx.fill();
     ctx.strokeStyle = LINE; ctx.lineWidth = 0.8; ctx.stroke();
 
-    // Eyes
-    eye(-7, -3, health <= 0);
-    eye(7, -3, health <= 0);
+    // Eyes — Boots' signature HUGE eyes
+    drawEye(-8, -4, health <= 0);
+    drawEye(8, -4, health <= 0);
 
-    // Nose
-    circ(0, 4, 2.5, NOSE, 0);
+    // Nose — small oval
+    ctx.beginPath();
+    ctx.ellipse(0, 5, 3, 2, 0, 0, Math.PI * 2);
+    ctx.fillStyle = NOSE; ctx.fill();
 
     // Mouth
-    ctx.strokeStyle = NOSE; ctx.lineWidth = 1.5; ctx.lineCap = "round";
+    ctx.strokeStyle = NOSE; ctx.lineWidth = 1.8; ctx.lineCap = "round";
     if (health <= 0) {
-      ctx.beginPath(); ctx.arc(0, 11, 7, 1.15*Math.PI, 1.85*Math.PI); ctx.stroke(); // sad
+      ctx.beginPath(); ctx.arc(0, 13, 8, 1.1*Math.PI, 1.9*Math.PI); ctx.stroke();
     } else if (state === "dancing") {
-      // open happy mouth
-      ctx.beginPath(); ctx.arc(0, 7, 7, 0.1*Math.PI, 0.9*Math.PI); ctx.fillStyle = "#8B1010"; ctx.fill(); ctx.stroke();
-      ctx.beginPath(); ctx.arc(0, 8, 4, 0.1*Math.PI, 0.9*Math.PI); ctx.fillStyle = "#FF6666"; ctx.fill();
+      ctx.beginPath(); ctx.arc(0, 9, 9, 0.08*Math.PI, 0.92*Math.PI);
+      ctx.fillStyle = "#7A0000"; ctx.fill(); ctx.stroke();
+      ctx.beginPath(); ctx.arc(0, 10, 5, 0.1*Math.PI, 0.9*Math.PI);
+      ctx.fillStyle = "#FF5555"; ctx.fill();
     } else {
-      ctx.beginPath(); ctx.arc(0, 7, 7, 0.1*Math.PI, 0.9*Math.PI); ctx.stroke(); // smile
+      ctx.beginPath(); ctx.arc(0, 9, 8, 0.1*Math.PI, 0.9*Math.PI); ctx.stroke();
     }
 
-    // Lounging: little "zzz"
+    // zzz when lounging
     if (state === "lounging") {
-      ctx.save();
-      ctx.font = "bold 8px 'Press Start 2P', monospace";
+      ctx.font = "bold 7px sans-serif";
       ctx.fillStyle = "#9966bb";
       const zOff = Math.sin(t * 2) * 2;
-      ctx.fillText("z", 18, -20 + zOff);
-      ctx.fillText("z", 24, -28 + zOff);
-      ctx.restore();
+      ctx.fillText("z", 20, -20 + zOff);
+      ctx.fillText("z", 26, -28 + zOff);
     }
 
     ctx.restore(); // head
@@ -523,7 +567,6 @@ let monkeyChill = () => {};
     monkeyState = "walking";
     scheduleLounge();
   };
-
   function scheduleLounge() {
     clearTimeout(loungeTimer);
     if (monkeyState === "dancing") return;
@@ -542,38 +585,112 @@ let monkeyChill = () => {};
     health = Math.max(0, Math.min(100, h));
     hbEl.style.width      = health + "%";
     hbEl.style.background = health > 60 ? "#39ff14" : health > 30 ? "#ffeb00" : "#ff4444";
-    if (health <= 25 && !bananaX) prompt.classList.remove("hidden");
-    else                          prompt.classList.add("hidden");
+    if (health <= 25 && bananaState === "none") prompt.classList.remove("hidden");
+    else                                        prompt.classList.add("hidden");
   }
   setInterval(() => { if (!nomming) setHealth(health - 2); }, 4000);
 
-  // ---- Banana ----
-  function dropBanana(x) {
-    if (bananaEl) bananaEl.remove();
-    const bx = (x !== undefined) ? x : Math.random() * (window.innerWidth - 80) + 40;
+  // ---- Banana — falling + split animation ----
+  const GROUND_Y = window.innerHeight - 22; // where banana lands
+
+  function dropBanana(targetX) {
+    // Clean up old banana
+    if (bananaEl) { bananaEl.remove(); bananaEl = null; }
+    prompt.classList.add("hidden");
+
+    const bx = (targetX !== undefined)
+      ? Math.max(30, Math.min(window.innerWidth - 30, targetX))
+      : Math.random() * (window.innerWidth - 100) + 50;
+
+    // Physics object — starts at top of screen
+    bananaPhys = { x: bx, y: -30, vy: 2, splitFrame: 0, split: false };
+    bananaState = "falling";
+
+    // Create DOM element for the banana
     bananaEl = document.createElement("div");
-    bananaEl.className = "banana-item"; bananaEl.textContent = "🍌";
-    bananaEl.style.left = bx + "px";
+    bananaEl.style.cssText = `
+      position: fixed; pointer-events: none; z-index: 49;
+      font-size: 1.6rem; line-height: 1;
+      transition: none;
+      transform-origin: center bottom;
+    `;
+    bananaEl.textContent = "🍌";
     document.body.appendChild(bananaEl);
-    bananaX = bx; prompt.classList.add("hidden");
   }
-  document.addEventListener("keydown", e => { if (e.key.toLowerCase() === "b") dropBanana(); });
-  document.addEventListener("click",   e => { if (e.clientY > window.innerHeight - 90) dropBanana(e.clientX); });
+
+  function updateBanana() {
+    if (!bananaPhys || bananaState === "none") return;
+
+    const p = bananaPhys;
+
+    if (bananaState === "falling") {
+      p.vy += 0.45; // gravity
+      p.y  += p.vy;
+
+      // Spin while falling
+      const spinDeg = p.vy * 8;
+      bananaEl.style.left      = (p.x - 12) + "px";
+      bananaEl.style.top       = p.y + "px";
+      bananaEl.style.transform = `rotate(${p.y * 3}deg)`;
+
+      if (p.y >= GROUND_Y) {
+        // Landed!
+        p.y  = GROUND_Y;
+        p.vy = 0;
+        bananaState = "splitting";
+        bananaEl.style.top       = p.y + "px";
+        bananaEl.style.transform = "rotate(0deg)";
+
+        // Squash on impact
+        bananaEl.style.transition = "transform 0.08s ease-out";
+        bananaEl.style.transform  = "scaleX(1.5) scaleY(0.5)";
+
+        setTimeout(() => {
+          // Bounce back then split open
+          bananaEl.style.transform = "scaleX(0.9) scaleY(1.1)";
+          setTimeout(() => {
+            bananaEl.style.transform = "scaleX(1) scaleY(1)";
+            bananaEl.textContent = "🍌";
+            // Split: show peel splat
+            setTimeout(() => {
+              bananaEl.style.fontSize  = "2rem";
+              bananaEl.textContent     = "🍌";
+              bananaEl.style.filter    = "hue-rotate(20deg) brightness(1.2)";
+              bananaState = "ready";
+              bananaX     = p.x; // monkey can now walk to it
+            }, 150);
+          }, 80);
+        }, 80);
+      }
+    }
+  }
+
+  document.addEventListener("keydown", e => {
+    if (e.key.toLowerCase() === "b") dropBanana();
+  });
+  document.addEventListener("click", e => {
+    if (e.clientY > window.innerHeight - 90) dropBanana(e.clientX);
+  });
 
   // ---- Animation loop ----
+  const DISPLAY_CX = DW / 2; // center offset for positioning
+
   function animate() {
     t += 0.016;
+    updateBanana();
 
-    if (bananaX !== null) {
+    if (bananaX !== null && bananaState === "ready") {
       const diff = bananaX - mx;
-      if (Math.abs(diff) < 10) {
+      if (Math.abs(diff) < 14) {
+        // Eat it!
         nomming = true;
-        bananaEl.remove(); bananaEl = null; bananaX = null;
+        if (bananaEl) { bananaEl.remove(); bananaEl = null; }
+        bananaX = null; bananaState = "none"; bananaPhys = null;
         setHealth(health + 50);
         let b = 0;
-        const bInterval = setInterval(() => {
-          monkeyObj.style.bottom = b % 2 === 0 ? "26px" : "10px";
-          if (++b > 7) { clearInterval(bInterval); monkeyObj.style.bottom = "10px"; nomming = false; }
+        const bInt = setInterval(() => {
+          monkeyObj.style.bottom = b % 2 === 0 ? "22px" : "10px";
+          if (++b > 7) { clearInterval(bInt); monkeyObj.style.bottom = "10px"; nomming = false; }
         }, 75);
       } else {
         mvx = diff > 0 ? 1.5 : -1.5;
@@ -581,20 +698,20 @@ let monkeyChill = () => {};
       }
     } else if (monkeyState === "dancing") {
       mvx = Math.sin(t * 3.2) * 1.4;
-      mx  = Math.max(CW/2, Math.min(window.innerWidth - CW/2, mx + mvx));
+      mx  = Math.max(DISPLAY_CX, Math.min(window.innerWidth - DISPLAY_CX, mx + mvx));
     } else if (monkeyState === "lounging") {
       mvx *= 0.88;
     } else if (health > 0) {
       if (Math.random() < 0.007) mvx *= -1;
       mx += mvx;
-      if (mx < CW/2)                       { mx = CW/2;                       mvx =  Math.abs(mvx); }
-      if (mx > window.innerWidth - CW/2)   { mx = window.innerWidth - CW/2;   mvx = -Math.abs(mvx); }
+      if (mx < DISPLAY_CX)                       { mx = DISPLAY_CX;                       mvx =  Math.abs(mvx); }
+      if (mx > window.innerWidth - DISPLAY_CX)   { mx = window.innerWidth - DISPLAY_CX;   mvx = -Math.abs(mvx); }
     }
 
     if (Math.abs(mvx) > 0.08) facing = mvx > 0 ? 1 : -1;
 
     drawMonkey(health <= 0 ? "dead" : monkeyState);
-    monkeyObj.style.left = (mx - CW / 2) + "px";
+    monkeyObj.style.left = (mx - DISPLAY_CX) + "px";
     requestAnimationFrame(animate);
   }
   animate();
