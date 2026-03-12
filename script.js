@@ -13,8 +13,8 @@
   const flash    = document.getElementById("gate-flash");
   const countdown = document.getElementById("gate-countdown");
 
-  // Only show once per session
-  if (sessionStorage.getItem("carlos-gated")) {
+  // Only show on first ever visit
+  if (localStorage.getItem("carlos-gated")) {
     gate.classList.add("hidden");
     loadPerverts();
     return;
@@ -90,7 +90,7 @@
   function closeGate() {
     if (stream) stream.getTracks().forEach(t => t.stop());
     gate.classList.add("hidden");
-    sessionStorage.setItem("carlos-gated", "1");
+    localStorage.setItem("carlos-gated", "1");
     loadPerverts();
   }
 })();
