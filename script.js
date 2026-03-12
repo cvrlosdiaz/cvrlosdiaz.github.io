@@ -224,4 +224,4 @@ const visitKey   = "carlos-corner-visits";
 let visitCount   = parseInt(localStorage.getItem(visitKey) || "0") + 1;
 localStorage.setItem(visitKey, visitCount);
 const vcEl = document.getElementById("visitor-count");
-if (vcEl) vcEl.textContent = `you've been here ${visitCount} time${visitCount === 1 ? "" : "s"} ♥`;
+if (vcEl) vcEl.textContent = `you've been here ${visitCount} time${visitCount === 1 ? "" : "s"} 8->`;
