@@ -586,18 +586,20 @@ footer {
 }
 #banana-prompt {
   position: fixed;
-  bottom: 62px;
+  bottom: 72px;
   left: 50%;
   transform: translateX(-50%);
+  z-index: 60;
   font-family: var(--font-px);
   font-size: 0.45rem;
   color: #fff;
   background: var(--panel-hd);
-  border: 1px solid var(--purple);
-  padding: 5px 12px;
+  border: 2px solid #fff;
+  padding: 6px 14px;
   white-space: nowrap;
   animation: blink 0.7s step-end infinite;
   pointer-events: none;
+  box-shadow: 0 2px 8px rgba(220,80,130,0.5);
 }
 #banana-prompt.hidden { display: none; }
 

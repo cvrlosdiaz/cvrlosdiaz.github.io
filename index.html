@@ -53,8 +53,6 @@
           </div>
           <button id="play-btn" onclick="toggleMusic()">[ ▶ play ]</button>
         </div>
-        <!-- hidden YouTube player (off-screen, proper size so YT initializes correctly) -->
-        <div id="yt-player" style="position:fixed;left:-9999px;top:-9999px;width:320px;height:180px;pointer-events:none;"></div>
 
         <div class="home-text">
           <p>wut up ho!</p>
@@ -225,6 +223,9 @@
     <div id="banana-prompt" class="hidden">bby needs a lil banana [ B ]</div>
   </div>
 
+
+  <!-- hidden YouTube player — must be outside any section so display:none on tab switch never kills it -->
+  <div id="yt-player" style="position:fixed;left:-9999px;top:-9999px;width:320px;height:180px;pointer-events:none;visibility:hidden;"></div>
 
   <script src="https://www.youtube.com/iframe_api"></script>
   <script src="script.js"></script>
